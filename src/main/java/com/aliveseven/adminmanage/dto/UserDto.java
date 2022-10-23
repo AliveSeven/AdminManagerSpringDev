@@ -1,6 +1,9 @@
 package com.aliveseven.adminmanage.dto;
 
+import com.aliveseven.adminmanage.entity.Menu;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * 接受前端登录请求的参数
@@ -17,5 +20,5 @@ public class UserDto {
     private String avatarUrl;
     private String token;
     private String role;
-    // private List<Menu> menus;
+    private List<Menu> menus;
 }

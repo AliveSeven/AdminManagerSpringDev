@@ -35,5 +35,7 @@ public class Menu implements Serializable {
 
     private String isHide;
 
+    private Integer pid;
+
 
 }
