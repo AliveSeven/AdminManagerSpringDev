@@ -4,9 +4,9 @@
 
 ## 技术栈
 
-**前端：** Vue3.2全家桶 + Vite + TypeScript + Pinia + Element-Plus + Echarts + Less
+**前端：**  Vue3.2全家桶 + Vite + TypeScript + Pinia + Element-Plus + Echarts + Less
 
-**后端：** SpringBoot2 + Mybatis-Plus + Hutool + Redis + JWT + MySql
+**后端：**  SpringBoot2 + Mybatis-Plus + Hutool + Redis + JWT + MySql
 
 ## 实现功能
 
