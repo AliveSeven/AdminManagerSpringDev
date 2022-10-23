@@ -42,8 +42,8 @@ public class UserController {
 
         // 调用/user接口，使用get方法时，返回查询的User全部数据
         @GetMapping
-        public List<User> findAll() {
-                return userService.list();
+        public Result findAll() {
+                return Result.success(userService.list());
         }
 
         // 根据用户id、查询返回数据

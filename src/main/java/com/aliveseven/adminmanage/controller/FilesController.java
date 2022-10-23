@@ -7,8 +7,14 @@ import cn.hutool.crypto.SecureUtil;
 import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
 import com.aliveseven.adminmanage.entity.Files;
+import com.aliveseven.adminmanage.entity.User;
 import com.aliveseven.adminmanage.mapper.FilesMapper;
+import com.aliveseven.adminmanage.service.impl.FilesServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Param;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +44,8 @@ public class FilesController {
 
     @Resource
     private FilesMapper filesMapper;
+
+    private FilesServiceImpl fileService;
 
 
     /**
@@ -78,7 +86,7 @@ public class FilesController {
             // 上传文件到磁盘
             file.transferTo(uploadFile);
             // 数据库若不存在重复文件，则不删除刚才上传的文件
-            url = "http://" + serverIp + ":9090/file/" + fileUUID;
+            url = "http://" + serverIp + ":8000/file/" + fileUUID;
         }
 
         // 存储数据库
@@ -99,7 +107,7 @@ public class FilesController {
 
 
     /**
-     * 文件下载接口   http://localhost:9090/file/{fileUUID}
+     * 文件下载接口   http://localhost:8000/file/{fileUUID}
      * @param fileUUID
      * @param response
      * @throws IOException
@@ -132,7 +140,26 @@ public class FilesController {
         return filesList.size() == 0 ? null : filesList.get(0);
     }
 
+    /**
+     * 通过文件id查找文件
+     * @param id
+     */
+    @GetMapping("/detail/{id}")
+    private Result getById(@PathVariable("id") Integer id){
+        return Result.success(filesMapper.selectById(id));
+    }
 
+    // 调用/page接口，参数有PageNum、pageSize，还有其他非必须参数进行模糊查询
+    @GetMapping("/page")
+    public Result page(@RequestParam("pageNum") Integer pageNum ,
+                       @RequestParam("pageSize") Integer pageSize,
+                       @RequestParam(value = "name", required = false) String name){
+        IPage<Files> page = new Page<>(pageNum , pageSize);
+        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like(!Strings.isEmpty(name),"name" , name);
+
+        return Result.success(fileService.page(page , queryWrapper));
+    }
 
     // 删除缓存
     private void flushRedis(String key) {
