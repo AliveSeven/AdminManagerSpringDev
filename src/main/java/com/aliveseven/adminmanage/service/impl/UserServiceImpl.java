@@ -49,17 +49,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             userDto.setToken(token);
             userDto.setPassword(SecureUtil.md5(userDto.getPassword()));
 
-            // 返回角色的权限菜单
-            List<Integer> menuIds = selectMenuByUserId(userDto.getId());
             // 新建一个菜单集合
-            List<Menu> menus = new ArrayList<>();
-            // 遍历传入的菜单id，根据id查询菜单信息
-            for(Integer menuId : menuIds){
-                Menu menu = menuMapper.selectById(menuId);
-                menus.add(menu);
-            }
+            List<Menu> menus = selectMenuByUserId(userDto.getId());
             // 返回菜单信息
             userDto.setMenus(menus);
+
             return userDto;
         } else {
             throw new ServiceException(Constants.CODE_600 , "用户名或密码错误");
@@ -102,9 +96,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return one;
     }
 
-    // 根据用户id查询用户有的权限菜单
-    @Override
-    public List<Integer> selectMenuByUserId(Integer id){
+    // 根据用户id查询用户有的权限菜单的id
+    public List<Integer> selectMenuIdsByUserId(Integer id){
         return userMapper.selectMenuByUserId(id);
     }
+
+    // 根据用户id查询用户有的权限菜单
+    public List<Menu> selectMenuByUserId(Integer id){
+        // 返回角色的权限菜单
+        List<Integer> menuIds = selectMenuIdsByUserId(id);
+        // 新建一个菜单集合
+        List<Menu> menus = new ArrayList<>();
+        // 遍历传入的菜单id，根据id查询菜单信息
+        for(Integer menuId : menuIds){
+            Menu menu = menuMapper.selectById(menuId);
+            menus.add(menu);
+        }
+        return menus;
+    }
+
 }

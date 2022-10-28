@@ -177,5 +177,13 @@ public class UserController {
                 }
                 return Result.success(userService.register(userDto));
         }
+
+        /**
+         * 传入用户id查询用户的菜单信息
+         */
+        @GetMapping("/roleMenu/{id}")
+        public Result getRoleMenu(@PathVariable Integer id){
+               return Result.success(userService.selectMenuByUserId(id));
+        }
 }
 

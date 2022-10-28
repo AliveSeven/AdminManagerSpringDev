@@ -1,6 +1,7 @@
 package com.aliveseven.adminmanage.service;
 
 import com.aliveseven.adminmanage.dto.UserDto;
+import com.aliveseven.adminmanage.entity.Menu;
 import com.aliveseven.adminmanage.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -20,5 +21,7 @@ public interface IUserService extends IService<User> {
 
     UserDto register(UserDto userDto);
 
-    List<Integer> selectMenuByUserId(Integer id);
+    List<Integer> selectMenuIdsByUserId(Integer id);
+
+    List<Menu> selectMenuByUserId(Integer id);
 }
