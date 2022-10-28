@@ -38,7 +38,7 @@ public class Role implements Serializable {
     /**
      * 唯一标识
      */
-    private String flag;
+    private String role;
 
 
 }

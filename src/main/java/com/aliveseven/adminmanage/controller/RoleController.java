@@ -67,7 +67,7 @@ public class RoleController {
                            @RequestParam(value = "name", required = false) String name){
                 QueryWrapper<Role> queryWrapper = new QueryWrapper<>();
                 queryWrapper.like(!Strings.isEmpty(name),"name" , name);
-                queryWrapper.orderByDesc("id");
+                // queryWrapper.orderByDesc("id");
                 return Result.success(roleService.page(new Page<>(pageNum, pageSize), queryWrapper));
         }
 
@@ -79,8 +79,7 @@ public class RoleController {
          */
         @PostMapping("/roleMenu/{roleId}")
         public Result roleMenu(@PathVariable Integer roleId, @RequestBody List<Integer> menuIds) {
-                roleService.setRoleMenu(roleId, menuIds);
-                return Result.success();
+                return Result.success(roleService.setRoleMenu(roleId, menuIds));
         }
         
         
@@ -88,7 +87,6 @@ public class RoleController {
         public Result getRoleMenu(@PathVariable Integer roleId){
                 return Result.success(roleService.getRoleMenu(roleId));
         }
-
 
 
 }

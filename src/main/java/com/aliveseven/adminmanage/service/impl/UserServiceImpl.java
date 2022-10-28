@@ -5,14 +5,20 @@ import cn.hutool.crypto.SecureUtil;
 import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.RoleEnum;
 import com.aliveseven.adminmanage.dto.UserDto;
+import com.aliveseven.adminmanage.entity.Menu;
 import com.aliveseven.adminmanage.entity.User;
 import com.aliveseven.adminmanage.exception.ServiceException;
+import com.aliveseven.adminmanage.mapper.MenuMapper;
 import com.aliveseven.adminmanage.mapper.UserMapper;
 import com.aliveseven.adminmanage.service.IUserService;
 import com.aliveseven.adminmanage.utils.TokenUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -25,6 +31,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
 
+    @Resource
+    private UserMapper userMapper;
+
+    @Resource
+    private MenuMapper menuMapper;
+
     // 登录业务
     public UserDto login(UserDto userDto){
         // 用户密码 md5加密
@@ -36,6 +48,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             String token = TokenUtils.genToken(one.getId().toString() , one.getPassword());
             userDto.setToken(token);
             userDto.setPassword(SecureUtil.md5(userDto.getPassword()));
+
+            // 返回角色的权限菜单
+            List<Integer> menuIds = selectMenuByUserId(userDto.getId());
+            // 新建一个菜单集合
+            List<Menu> menus = new ArrayList<>();
+            // 遍历传入的菜单id，根据id查询菜单信息
+            for(Integer menuId : menuIds){
+                Menu menu = menuMapper.selectById(menuId);
+                menus.add(menu);
+            }
+            // 返回菜单信息
+            userDto.setMenus(menus);
             return userDto;
         } else {
             throw new ServiceException(Constants.CODE_600 , "用户名或密码错误");
@@ -63,6 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    // 根据传过来的账号密码，获取用户信息
     private User getUserInfo(UserDto userDto){
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username" , userDto.getUsername());
@@ -75,5 +100,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             throw new ServiceException(Constants.CODE_500 , "系统错误");
         }
         return one;
+    }
+
+    // 根据用户id查询用户有的权限菜单
+    @Override
+    public List<Integer> selectMenuByUserId(Integer id){
+        return userMapper.selectMenuByUserId(id);
     }
 }
