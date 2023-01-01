@@ -115,4 +115,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return menus;
     }
 
+    // 验证token是否过期了
+    public Boolean getTokenExpiration(String token){
+       return TokenUtils.isExpiration(token);
+    }
+
 }

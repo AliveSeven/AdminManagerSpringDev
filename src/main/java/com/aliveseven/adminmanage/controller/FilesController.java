@@ -45,8 +45,8 @@ public class FilesController {
     @Resource
     private FilesMapper filesMapper;
 
+    @Resource
     private FilesServiceImpl fileService;
-
 
     /**
      * 文件上传接口

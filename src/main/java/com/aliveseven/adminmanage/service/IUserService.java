@@ -24,4 +24,6 @@ public interface IUserService extends IService<User> {
     List<Integer> selectMenuIdsByUserId(Integer id);
 
     List<Menu> selectMenuByUserId(Integer id);
+
+    Boolean getTokenExpiration(String token);
 }

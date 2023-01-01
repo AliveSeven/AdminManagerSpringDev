@@ -166,6 +166,14 @@ public class UserController {
         }
 
         /**
+         * 验证用户的token是否过期了
+         */
+        @PostMapping("/token")
+        public Result getTokenExpiration(@RequestParam String token){
+                return Result.success(userService.getTokenExpiration(token));
+        }
+
+        /**
          * 注册接口
          */
         @PostMapping("/register")
