@@ -7,13 +7,11 @@ import cn.hutool.crypto.SecureUtil;
 import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
 import com.aliveseven.adminmanage.entity.Files;
-import com.aliveseven.adminmanage.entity.User;
 import com.aliveseven.adminmanage.mapper.FilesMapper;
 import com.aliveseven.adminmanage.service.impl.FilesServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -63,8 +61,10 @@ public class FilesController {
 
         // 定义一个文件的唯一标识码
         String fileUUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + type;
+        // 上传的文件是   上传文件路径+文件名
+        File uploadFile = new File(fileUploadPath + originalFilename);
+//        File uploadFile = new File(fileUploadPath + fileUUID);
 
-        File uploadFile = new File(fileUploadPath + fileUUID);
         // 判断配置的文件目录是否存在，若不存在则创建一个新的文件目录
         File parentFile = uploadFile.getParentFile();
         if(!parentFile.exists()){
@@ -81,7 +81,9 @@ public class FilesController {
             uploadFile.delete();
             Map<String , Object> res = new HashMap<>();
             res.put("url" , url);
-            return Result.success(res);
+            return Result.error(Constants.CODE_701 , "文件已经存在了" , res);
+        }else if(size/1024 > 102400){
+            return Result.error(Constants.CODE_702 , "文件大小超出限制" , null);
         } else {
             // 上传文件到磁盘
             file.transferTo(uploadFile);
@@ -100,9 +102,40 @@ public class FilesController {
 
 
         // 最简单的方式：直接清空缓存
-        flushRedis(Constants.FILES_KEY);
+//        flushRedis(Constants.FILES_KEY);
 
         return Result.success(url);
+    }
+
+
+    /**
+     * 删除指定文件夹或文件
+     * @param id 文件的id
+     * @return Boolean 删除成功返回true，删除失败返回false。
+     */
+    @PostMapping("/delete/{id}")
+    public Result DeleteFileById(@PathVariable Integer id){
+        boolean flag = false;
+        // 根据id获取文件
+        Files files = filesMapper.selectById(id);
+        if(files == null){
+            return Result.error(Constants.CODE_700 , "文件id不存在");
+        } else {
+            // 根据文件获取文件名
+            String fileName = files.getName();
+            File file = new File(fileUploadPath + fileName);
+            if(file.isFile() && file.exists()){
+                flag = file.delete();
+            }
+            if(flag){
+                fileService.removeById(id);
+                files.setIsDelete(true);
+                // 返回flag
+                return Result.success(true , "删除文件成功");
+            } else {
+                return Result.error(Constants.CODE_700 , "文件不存在");
+            }
+        }
     }
 
 
