@@ -1,6 +1,8 @@
 package com.aliveseven.adminmanage.controller;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
@@ -8,11 +10,11 @@ import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
 import com.aliveseven.adminmanage.dto.UserDto;
 import com.aliveseven.adminmanage.entity.User;
+import com.aliveseven.adminmanage.service.IRedisService;
 import com.aliveseven.adminmanage.service.IUserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.sun.org.apache.regexp.internal.RE;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -40,6 +42,9 @@ public class UserController {
         @Resource
         private IUserService userService;
 
+        @Resource
+        private IRedisService iRedisService;
+
         // 调用/user接口，使用get方法时，返回查询的User全部数据
         @GetMapping
         public Result findAll() {
@@ -56,18 +61,24 @@ public class UserController {
         @PostMapping("/save")
         public Result save(@RequestBody User user) {
             // 新增或者更新用户数据
+            // Redis模糊搜索批量删除缓存
+            iRedisService.deleteByPre(Constants.USER_PAGE_KEY);
             return Result.success(userService.saveOrUpdate(user));
         }
 
         // 删除数据
         @PostMapping("/delete")
         public Result delete(@RequestParam Integer id) {
+                // Redis模糊搜索批量删除缓存
+                iRedisService.deleteByPre(Constants.USER_PAGE_KEY);
                 return Result.success(userService.removeById(id));
         }
 
         // 批量删除
         @PostMapping("/delete/batch")
         public Result deleteBatch(@RequestBody List<Integer> ids) {
+                // Redis模糊搜索批量删除缓存
+                iRedisService.deleteByPre(Constants.USER_PAGE_KEY);
                 return Result.success(userService.removeByIds(ids));
         }
 
@@ -84,7 +95,35 @@ public class UserController {
                 queryWrapper.like(!Strings.isEmpty(email),"email" , email);
                 queryWrapper.like(!Strings.isEmpty(phone),"phone", phone);
 
-                return Result.success(userService.page(page , queryWrapper));
+                if(username == "" && email == "" && phone == ""){
+                        // 查询缓存
+                        String userKey = Constants.USER_PAGE_KEY + "_" + String.valueOf(pageNum);
+                        String res = iRedisService.getString(userKey);
+                        // 如果缓存存在，不为空，拿出来
+                        if(!StrUtil.isBlank(res)){
+                                // 把String类型转成JSON类型再返回
+                                JSONObject data = JSONUtil.parseObj(res);
+                                Integer nowSize = (Integer) data.get("size");
+                                if(nowSize != pageSize){
+                                        // 页码发生变化的时候，清除缓存重新设置
+                                        iRedisService.flushRedis(userKey);
+                                        // 重新查询数据库
+                                        IPage<User> userIPage = userService.page(page, queryWrapper);
+                                        // 设置缓存
+                                        iRedisService.setString(userKey , JSONUtil.toJsonStr(userIPage));
+                                        return Result.success(userIPage);
+                                }
+                                return Result.success(data);
+                        } else {
+                                // 如果缓存不存在，查询数据库
+                                IPage<User> userIPage = userService.page(page, queryWrapper);
+                                // 设置缓存
+                                iRedisService.setString(userKey , JSONUtil.toJsonStr(userIPage));
+                                return Result.success(userIPage);
+                        }
+                }
+
+                return Result.success(userService.page(page, queryWrapper));
         }
 
         /**

@@ -4,10 +4,14 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
 import com.aliveseven.adminmanage.entity.Files;
+import com.aliveseven.adminmanage.entity.User;
 import com.aliveseven.adminmanage.mapper.FilesMapper;
+import com.aliveseven.adminmanage.service.IRedisService;
 import com.aliveseven.adminmanage.service.impl.FilesServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -45,6 +49,9 @@ public class FilesController {
 
     @Resource
     private FilesServiceImpl fileService;
+
+    @Resource
+    private IRedisService iRedisService;
 
     /**
      * 文件上传接口
@@ -100,9 +107,6 @@ public class FilesController {
         saveFile.setMd5(md5);
         filesMapper.insert(saveFile);
 
-
-        // 最简单的方式：直接清空缓存
-//        flushRedis(Constants.FILES_KEY);
 
         return Result.success(url);
     }
@@ -191,12 +195,36 @@ public class FilesController {
         QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
         queryWrapper.like(!Strings.isEmpty(name),"name" , name);
 
-        return Result.success(fileService.page(page , queryWrapper));
-    }
+        if(name == ""){
+            // 查询缓存
+            String filesKey = Constants.FILES_PAGE_KEY + "_" + String.valueOf(pageNum);
+            String res = iRedisService.getString(filesKey);
+            // 如果缓存存在，拿出来
+            if(!StrUtil.isBlank(res)){
+                // 把String类型转成JSON类型再返回
+                JSONObject data = JSONUtil.parseObj(res);
+                Integer nowSize = (Integer) data.get("size");
+                if(nowSize != pageSize){
+                    // 页码发生变化的时候，清除缓存重新设置
+                    iRedisService.flushRedis(filesKey);
+                    // 重新查询数据库
+                    IPage<Files> filesIPage = fileService.page(page, queryWrapper);
+                    // 设置缓存
+                    iRedisService.setString(filesKey , JSONUtil.toJsonStr(filesIPage));
+                    return Result.success(filesIPage);
+                }
+                return Result.success(data);
+            } else {
+                // 如果缓存不存在，查询数据库
+                IPage<Files> filesIPage = fileService.page(page, queryWrapper);
+                // 设置缓存
+                iRedisService.setString(filesKey , JSONUtil.toJsonStr(filesIPage));
+                return Result.success(filesIPage);
+            }
+        }
 
-    // 删除缓存
-    private void flushRedis(String key) {
-        // stringRedisTemplate.delete(key);
+        return Result.success(fileService.page(page, queryWrapper));
+
     }
 
 

@@ -13,5 +13,8 @@ public interface Constants {
 
     String DICT_TYPE_ICON = "icon";
 
-    String FILES_KEY = "FILES_FRONT_ALL";
+    String FILES_PAGE_KEY = "FILES_PAGE"; // Redis缓存文件查询
+    String ROLE_PAGE_KEY = "ROLE_PAGE"; // Redis缓存角色查询
+    String MENU_PAGE_KEY = "MENU_PAGE"; // Redis缓存菜单查询
+    String USER_PAGE_KEY = "USER_PAGE"; // Redis缓存用户查询
 }
