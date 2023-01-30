@@ -1,8 +1,13 @@
 package com.aliveseven.adminmanage.controller;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
+import com.aliveseven.adminmanage.entity.Files;
 import com.aliveseven.adminmanage.entity.Role;
-import com.aliveseven.adminmanage.entity.User;
+import com.aliveseven.adminmanage.service.IRedisService;
 import com.aliveseven.adminmanage.service.IRoleService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -29,6 +34,9 @@ public class RoleController {
         @Resource
         private IRoleService roleService;
 
+        @Resource
+        private IRedisService iRedisService;
+
         // 调用/role接口，使用get方法时，返回查询的role表的全部数据
         @GetMapping
         public Result findAll() {
@@ -45,18 +53,24 @@ public class RoleController {
         @PostMapping("/save")
         public Result save(@RequestBody Role role) {
                 // 新增或者更新角色数据
+                // Redis模糊搜索批量删除缓存
+                iRedisService.deleteByPre(Constants.ROLE_PAGE_KEY);
                 return Result.success(roleService.saveOrUpdate(role));
         }
 
         // 删除数据
         @PostMapping("/delete")
         public Result delete(@RequestParam Integer id) {
+                // Redis模糊搜索批量删除缓存
+                iRedisService.deleteByPre(Constants.ROLE_PAGE_KEY);
                 return Result.success(roleService.removeById(id));
         }
 
         // 批量删除
         @PostMapping("/delete/batch")
         public Result deleteBatch(@RequestBody List<Integer> ids) {
+                // Redis模糊搜索批量删除缓存
+                iRedisService.deleteByPre(Constants.ROLE_PAGE_KEY);
                 return Result.success(roleService.removeByIds(ids));
         }
 
@@ -68,6 +82,35 @@ public class RoleController {
                 QueryWrapper<Role> queryWrapper = new QueryWrapper<>();
                 queryWrapper.like(!Strings.isEmpty(name),"name" , name);
                 // queryWrapper.orderByDesc("id");
+
+                if(name == ""){
+                        // 查询缓存
+                        String roleKey = Constants.ROLE_PAGE_KEY + "_" + String.valueOf(pageNum);
+                        String res = iRedisService.getString(roleKey);
+                        // 如果缓存存在，拿出来
+                        if(!StrUtil.isBlank(res)){
+                                // 把String类型转成JSON类型再返回
+                                JSONObject data = JSONUtil.parseObj(res);
+                                Integer nowSize = (Integer) data.get("size");
+                                if(nowSize != pageSize){
+                                        // 页码发生变化的时候，清除缓存重新设置
+                                        iRedisService.flushRedis(roleKey);
+                                        // 重新查询数据库
+                                        IPage<Role> roleIPage = roleService.page(new Page<>(pageNum, pageSize), queryWrapper);
+                                        // 设置缓存
+                                        iRedisService.setString(roleKey , JSONUtil.toJsonStr(roleIPage));
+                                        return Result.success(roleIPage);
+                                }
+                                return Result.success(data);
+                        } else {
+                                // 如果缓存不存在，查询数据库
+                                IPage<Role> roleIPage = roleService.page(new Page<>(pageNum, pageSize), queryWrapper);
+                                // 设置缓存
+                                iRedisService.setString(roleKey , JSONUtil.toJsonStr(roleIPage));
+                                return Result.success(roleIPage);
+                        }
+                }
+
                 return Result.success(roleService.page(new Page<>(pageNum, pageSize), queryWrapper));
         }
 
@@ -78,7 +121,7 @@ public class RoleController {
          * @return
          */
         @PostMapping("/roleMenu/{roleId}")
-        public Result roleMenu(@PathVariable Integer roleId, @RequestBody List<Integer> menuIds) {
+        public Result setRoleMenu(@PathVariable Integer roleId, @RequestBody List<Integer> menuIds) {
                 return Result.success(roleService.setRoleMenu(roleId, menuIds));
         }
         

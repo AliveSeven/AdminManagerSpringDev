@@ -54,7 +54,7 @@ public class FilesController {
     private IRedisService iRedisService;
 
     /**
-     * 文件上传接口
+     * 文件上传接口，新增接口
      * @param file 前端传递过来的文件
      * @return
      * @throws IOException
@@ -107,6 +107,8 @@ public class FilesController {
         saveFile.setMd5(md5);
         filesMapper.insert(saveFile);
 
+        // Redis模糊搜索批量删除缓存
+        iRedisService.deleteByPre(Constants.FILES_PAGE_KEY);
 
         return Result.success(url);
     }
@@ -134,6 +136,8 @@ public class FilesController {
             if(flag){
                 fileService.removeById(id);
                 files.setIsDelete(true);
+                // Redis模糊搜索批量删除缓存
+                iRedisService.deleteByPre(Constants.FILES_PAGE_KEY);
                 // 返回flag
                 return Result.success(true , "删除文件成功");
             } else {
