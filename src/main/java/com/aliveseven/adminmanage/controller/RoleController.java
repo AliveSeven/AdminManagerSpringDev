@@ -42,10 +42,10 @@ public class RoleController {
         }
 
         // 新增或者更新
-        @PostMapping
+        @PostMapping("/save")
         public Result save(@RequestBody Role role) {
-                roleService.saveOrUpdate(role);
-                return Result.success();
+                // 新增或者更新角色数据
+                return Result.success(roleService.saveOrUpdate(role));
         }
 
         // 删除数据

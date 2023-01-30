@@ -71,8 +71,5 @@ public class MenuController {
 
                 return Result.success(menuService.page(page , queryWrapper));
         }
-
-
-
 }
 
