@@ -83,7 +83,7 @@ public class RoleController {
                 queryWrapper.like(!Strings.isEmpty(name),"name" , name);
                 // queryWrapper.orderByDesc("id");
 
-                if(name == ""){
+                if(name == "" || name == null){
                         // 查询缓存
                         String roleKey = Constants.ROLE_PAGE_KEY + "_" + String.valueOf(pageNum);
                         String res = iRedisService.getString(roleKey);

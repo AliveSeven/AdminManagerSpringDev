@@ -42,7 +42,6 @@ public class TokenUtils {
                 .sign(Algorithm.HMAC256(sign)); // 以 password 作为 token 的密钥
     }
 
-
     /**
      * 校验token是否正确
      *

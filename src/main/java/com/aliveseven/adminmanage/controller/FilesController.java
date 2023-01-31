@@ -199,7 +199,7 @@ public class FilesController {
         QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
         queryWrapper.like(!Strings.isEmpty(name),"name" , name);
 
-        if(name == ""){
+        if(name == "" || name == null){
             // 查询缓存
             String filesKey = Constants.FILES_PAGE_KEY + "_" + String.valueOf(pageNum);
             String res = iRedisService.getString(filesKey);

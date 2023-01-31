@@ -2,6 +2,8 @@ package com.aliveseven.adminmanage.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -36,6 +38,5 @@ public class Menu implements Serializable {
     private String isHide;
 
     private Integer pid;
-
 
 }

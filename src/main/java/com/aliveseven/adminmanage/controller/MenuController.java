@@ -6,16 +6,18 @@ import cn.hutool.json.JSONUtil;
 import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
 import com.aliveseven.adminmanage.entity.Menu;
-import com.aliveseven.adminmanage.entity.User;
 import com.aliveseven.adminmanage.service.IMenuService;
 import com.aliveseven.adminmanage.service.IRedisService;
+import com.aliveseven.adminmanage.service.impl.MenuServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sun.deploy.util.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,7 +42,37 @@ public class MenuController {
         // 调用/menu接口，使用get方法时，返回查询的Menu全部数据
         @GetMapping
         public Result findAll() {
-                return Result.success(menuService.list());
+                // 查询Redis缓存
+                String res = iRedisService.getString(Constants.MENU_PAGE_KEY);
+                // 如果缓存存在，不为空，拿出来
+                if(!StrUtil.isBlank(res)){
+                        // 把String类型转成JSON类型再返回
+                        JSONObject data = JSONUtil.parseObj(res);
+                        return Result.success(data);
+                } else {
+                        // 如果缓存不存在，查询数据库
+                        List<Menu> menus = menuService.list();
+                        // 新建一个List
+                        ArrayList<Menu> newMenus = new ArrayList();
+                        // 新建一个Map，key为pid，value为List<Menu>
+                        Map<Integer , List<Menu>> ml = new HashMap<>();
+                        // 找出menus中所有pid不为null或者''的menu返回，并且去重
+                        List<Menu> collectPidMenu = menus.stream().filter(m -> m.getPid() != null).distinct().collect(Collectors.toList());
+                        // 建一个新的List用于保存值
+                        for(Menu ls : menus){
+                           if(ls.getPid() == null){
+                                   // 如果ls的pid不存在，那么将其加入到其中
+                                   newMenus.add(ls);
+                           }
+                        }
+                        Map<String , Object> map = new HashMap<>();
+                        map.put("parent" , newMenus);
+                        map.put("children" , collectPidMenu);
+                        map.put("total" , menus.size());
+                        // 设置缓存
+                        iRedisService.setString(Constants.MENU_PAGE_KEY , JSONUtil.toJsonStr(map));
+                        return Result.success(menus);
+                }
         }
 
         // 根据菜单id、查询返回数据
@@ -82,7 +114,7 @@ public class MenuController {
                 QueryWrapper<Menu> queryWrapper = new QueryWrapper<>();
                 queryWrapper.like(!Strings.isEmpty(name),"username" , name);
 
-                if(name == ""){
+                if(name == "" || name == null){
                         // 查询缓存
                         String menuKey = Constants.MENU_PAGE_KEY + "_" + String.valueOf(pageNum);
                         String res = iRedisService.getString(menuKey);
@@ -112,5 +144,6 @@ public class MenuController {
 
                 return Result.success(menuService.page(page , queryWrapper));
         }
+
 }
 
