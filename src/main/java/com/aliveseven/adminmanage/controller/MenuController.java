@@ -54,24 +54,26 @@ public class MenuController {
                         List<Menu> menus = menuService.list();
                         // 新建一个List
                         ArrayList<Menu> newMenus = new ArrayList();
-                        // 新建一个Map，key为pid，value为List<Menu>
-                        Map<Integer , List<Menu>> ml = new HashMap<>();
-                        // 找出menus中所有pid不为null或者''的menu返回，并且去重
+                        // 找出menus中所有pid不为null或者''的menu返回，并且去重，这里面装的是子路由
                         List<Menu> collectPidMenu = menus.stream().filter(m -> m.getPid() != null).distinct().collect(Collectors.toList());
                         // 建一个新的List用于保存值
                         for(Menu ls : menus){
-                           if(ls.getPid() == null){
-                                   // 如果ls的pid不存在，那么将其加入到其中
-                                   newMenus.add(ls);
-                           }
+                                if(ls.getPid() == null){
+                                        // 如果ls的pid不存在，那么将其加入到其中
+                                        newMenus.add(ls);
+                                }
                         }
                         Map<String , Object> map = new HashMap<>();
+                        // 父路由
                         map.put("parent" , newMenus);
+                        // 子路由
                         map.put("children" , collectPidMenu);
+                        // 路由总数
                         map.put("total" , menus.size());
                         // 设置缓存
                         iRedisService.setString(Constants.MENU_PAGE_KEY , JSONUtil.toJsonStr(map));
-                        return Result.success(menus);
+                        // 将map返回
+                        return Result.success(map);
                 }
         }
 
