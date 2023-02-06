@@ -40,34 +40,49 @@ public class ${table.controllerName} {
 #end
 
         @Resource
-        private ${table.serviceName} ${table.entityPath}Service;
+        private ${table.serviceName} i${table.entityPath}Service;
 
+        // 新增或者更新
         @PostMapping("/save")
-        public Boolean save(@RequestBody ${entity} ${table.entityPath}) {
-            return ${table.entityPath}Service.saveOrUpdate(${table.entityPath});
+        public Result save(@RequestBody ${entity} ${table.entityPath}) {
+                return Result.success(i${table.entityPath}Service.saveOrUpdate(${table.entityPath}));
         }
 
+        // 根据id，删除数据
         @PostMapping("/delete")
-        public Boolean save(@RequestParam Integer id) {
-                return ${table.entityPath}Service.removeById(id);
+        public Result save(@RequestParam Integer id) {
+                return Result.success(i${table.entityPath}Service.removeById(id));
         }
 
+        // 批量删除
+        @PostMapping("/delete/batch")
+        public Result deleteBatch(@RequestBody List<Integer> ids) {
+                return Result.success(i${table.entityPath}Service.removeByIds(ids));
+        }
+
+        // 使用get方法时，返回查询的role表的全部数据
         @GetMapping
-        public List<${entity}> findAll() {
-                return ${table.entityPath}Service.list();
+        public Result findAll() {
+                return Result.success(i${table.entityPath}Service.list());
         }
 
+        // 根据角色id、查询返回数据
         @GetMapping("/{id}")
-        public List<${entity}> findOne(@PathVariable Integer id) {
-                return ${table.entityPath}Service.list();
+        public Result findOne(@PathVariable Integer id) {
+                return Result.success(i${table.entityPath}Service.getById(id));
         }
 
+        // 分页查询
         @GetMapping("/page")
-        public Page<${entity}> findPage(@RequestParam Integer pageNum,
-        @RequestParam Integer pageSize) {
-                return ${table.entityPath}Service.page(new Page<>(pageNum, pageSize));
-        }
+        public Result findPage(@RequestParam("pageNum") Integer pageNum,
+        @RequestParam("pageSize") Integer pageSize,
+        @RequestParam(value = "name", required = false) String name) {
+                IPage<${entity}> page = new Page<>(pageNum , pageSize);
+                QueryWrapper<${entity}> queryWrapper = new QueryWrapper<>();
+                queryWrapper.like(!Strings.isEmpty(name),"name" , name);
 
+                return Result.success(i${table.entityPath}Service.page(page , queryWrapper));
+        }
 
 
 }

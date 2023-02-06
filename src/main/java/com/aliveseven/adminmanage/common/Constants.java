@@ -17,4 +17,5 @@ public interface Constants {
     String ROLE_PAGE_KEY = "ROLE_PAGE"; // Redis缓存角色查询
     String MENU_PAGE_KEY = "MENU_PAGE"; // Redis缓存菜单查询
     String USER_PAGE_KEY = "USER_PAGE"; // Redis缓存用户查询
+    String Todolist_PAGE_KEY = "Todolist_PAGE"; // Redis缓存待办事项查询
 }

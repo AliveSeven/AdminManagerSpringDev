@@ -5,7 +5,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.aliveseven.adminmanage.common.Constants;
 import com.aliveseven.adminmanage.common.Result;
-import com.aliveseven.adminmanage.entity.Files;
 import com.aliveseven.adminmanage.entity.Role;
 import com.aliveseven.adminmanage.service.IRedisService;
 import com.aliveseven.adminmanage.service.IRoleService;
@@ -32,21 +31,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoleController {
 
         @Resource
-        private IRoleService roleService;
+        private IRoleService iRoleService;
 
         @Resource
         private IRedisService iRedisService;
 
-        // 调用/role接口，使用get方法时，返回查询的role表的全部数据
+        // 使用get方法时，返回查询的role表的全部数据
         @GetMapping
         public Result findAll() {
-                return Result.success(roleService.list());
+                return Result.success(iRoleService.list());
         }
 
         // 根据角色id、查询返回数据
         @GetMapping("/{id}")
         public Result findOne(@PathVariable Integer id) {
-                return Result.success(roleService.getById(id));
+                return Result.success(iRoleService.getById(id));
         }
 
         // 新增或者更新
@@ -55,7 +54,7 @@ public class RoleController {
                 // 新增或者更新角色数据
                 // Redis模糊搜索批量删除缓存
                 iRedisService.deleteByPre(Constants.ROLE_PAGE_KEY);
-                return Result.success(roleService.saveOrUpdate(role));
+                return Result.success(iRoleService.saveOrUpdate(role));
         }
 
         // 删除数据
@@ -63,7 +62,7 @@ public class RoleController {
         public Result delete(@RequestParam Integer id) {
                 // Redis模糊搜索批量删除缓存
                 iRedisService.deleteByPre(Constants.ROLE_PAGE_KEY);
-                return Result.success(roleService.removeById(id));
+                return Result.success(iRoleService.removeById(id));
         }
 
         // 批量删除
@@ -71,7 +70,7 @@ public class RoleController {
         public Result deleteBatch(@RequestBody List<Integer> ids) {
                 // Redis模糊搜索批量删除缓存
                 iRedisService.deleteByPre(Constants.ROLE_PAGE_KEY);
-                return Result.success(roleService.removeByIds(ids));
+                return Result.success(iRoleService.removeByIds(ids));
         }
 
         // 调用/page接口，参数有PageNum、pageSize，还有其他非必须参数进行模糊查询
@@ -96,7 +95,7 @@ public class RoleController {
                                         // 页码发生变化的时候，清除缓存重新设置
                                         iRedisService.flushRedis(roleKey);
                                         // 重新查询数据库
-                                        IPage<Role> roleIPage = roleService.page(new Page<>(pageNum, pageSize), queryWrapper);
+                                        IPage<Role> roleIPage = iRoleService.page(new Page<>(pageNum, pageSize), queryWrapper);
                                         // 设置缓存
                                         iRedisService.setString(roleKey , JSONUtil.toJsonStr(roleIPage));
                                         return Result.success(roleIPage);
@@ -104,14 +103,14 @@ public class RoleController {
                                 return Result.success(data);
                         } else {
                                 // 如果缓存不存在，查询数据库
-                                IPage<Role> roleIPage = roleService.page(new Page<>(pageNum, pageSize), queryWrapper);
+                                IPage<Role> roleIPage = iRoleService.page(new Page<>(pageNum, pageSize), queryWrapper);
                                 // 设置缓存
                                 iRedisService.setString(roleKey , JSONUtil.toJsonStr(roleIPage));
                                 return Result.success(roleIPage);
                         }
                 }
 
-                return Result.success(roleService.page(new Page<>(pageNum, pageSize), queryWrapper));
+                return Result.success(iRoleService.page(new Page<>(pageNum, pageSize), queryWrapper));
         }
 
         /**
@@ -122,13 +121,13 @@ public class RoleController {
          */
         @PostMapping("/roleMenu/{roleId}")
         public Result setRoleMenu(@PathVariable Integer roleId, @RequestBody List<Integer> menuIds) {
-                return Result.success(roleService.setRoleMenu(roleId, menuIds));
+                return Result.success(iRoleService.setRoleMenu(roleId, menuIds));
         }
         
         
         @GetMapping("/roleMenu/{roleId}")
         public Result getRoleMenu(@PathVariable Integer roleId){
-                return Result.success(roleService.getRoleMenu(roleId));
+                return Result.success(iRoleService.getRoleMenu(roleId));
         }
 
 

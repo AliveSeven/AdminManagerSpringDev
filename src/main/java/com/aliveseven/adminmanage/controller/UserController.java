@@ -40,7 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
         @Resource
-        private IUserService userService;
+        private IUserService iUserService;
 
         @Resource
         private IRedisService iRedisService;
@@ -48,13 +48,13 @@ public class UserController {
         // 调用/user接口，使用get方法时，返回查询的User全部数据
         @GetMapping
         public Result findAll() {
-                return Result.success(userService.list());
+                return Result.success(iUserService.list());
         }
 
         // 根据用户id、查询返回数据
         @GetMapping("/{id}")
         public Result findOne(@PathVariable Integer id) {
-                return Result.success(userService.getById(id));
+                return Result.success(iUserService.getById(id));
         }
 
         // 调用/user/save接口，使用post方法时，返回新增或者更新User数据
@@ -63,7 +63,7 @@ public class UserController {
             // 新增或者更新用户数据
             // Redis模糊搜索批量删除缓存
             iRedisService.deleteByPre(Constants.USER_PAGE_KEY);
-            return Result.success(userService.saveOrUpdate(user));
+            return Result.success(iUserService.saveOrUpdate(user));
         }
 
         // 删除数据
@@ -71,7 +71,7 @@ public class UserController {
         public Result delete(@RequestParam Integer id) {
                 // Redis模糊搜索批量删除缓存
                 iRedisService.deleteByPre(Constants.USER_PAGE_KEY);
-                return Result.success(userService.removeById(id));
+                return Result.success(iUserService.removeById(id));
         }
 
         // 批量删除
@@ -79,7 +79,7 @@ public class UserController {
         public Result deleteBatch(@RequestBody List<Integer> ids) {
                 // Redis模糊搜索批量删除缓存
                 iRedisService.deleteByPre(Constants.USER_PAGE_KEY);
-                return Result.success(userService.removeByIds(ids));
+                return Result.success(iUserService.removeByIds(ids));
         }
 
         // 调用/page接口，参数有PageNum、pageSize，还有其他非必须参数进行模糊查询
@@ -108,7 +108,7 @@ public class UserController {
                                         // 页码发生变化的时候，清除缓存重新设置
                                         iRedisService.flushRedis(userKey);
                                         // 重新查询数据库
-                                        IPage<User> userIPage = userService.page(page, queryWrapper);
+                                        IPage<User> userIPage = iUserService.page(page, queryWrapper);
                                         // 设置缓存
                                         iRedisService.setString(userKey , JSONUtil.toJsonStr(userIPage));
                                         return Result.success(userIPage);
@@ -116,14 +116,14 @@ public class UserController {
                                 return Result.success(data);
                         } else {
                                 // 如果缓存不存在，查询数据库
-                                IPage<User> userIPage = userService.page(page, queryWrapper);
+                                IPage<User> userIPage = iUserService.page(page, queryWrapper);
                                 // 设置缓存
                                 iRedisService.setString(userKey , JSONUtil.toJsonStr(userIPage));
                                 return Result.success(userIPage);
                         }
                 }
 
-                return Result.success(userService.page(page, queryWrapper));
+                return Result.success(iUserService.page(page, queryWrapper));
         }
 
         /**
@@ -132,7 +132,7 @@ public class UserController {
         @GetMapping("/export")
         public void export(HttpServletResponse response) throws Exception {
                 // 从数据库查询出所有的数据
-                List<User> list = userService.list();
+                List<User> list = iUserService.list();
                 // 通过工具类创建writer 写出到磁盘路径
                 // ExcelWriter writer = ExcelUtil.getWriter(filesUploadPath + "/用户信息.xlsx");
                 // 在内存操作，写出到浏览器
@@ -185,7 +185,7 @@ public class UserController {
                 excelReader.close();
 
                 // 保存到表中
-                userService.saveBatch(users);
+                iUserService.saveBatch(users);
                 return Result.success(true);
         }
 
@@ -200,7 +200,7 @@ public class UserController {
                 if(StrUtil.isBlank(username) || StrUtil.isBlank(password)){
                         return Result.error(Constants.CODE_400, "参数错误");
                 }
-                UserDto dto = userService.login(userDto);
+                UserDto dto = iUserService.login(userDto);
                 return Result.success(dto);
         }
 
@@ -209,7 +209,7 @@ public class UserController {
          */
         @PostMapping("/token")
         public Result getTokenExpiration(@RequestParam String token){
-                return Result.success(userService.getTokenExpiration(token));
+                return Result.success(iUserService.getTokenExpiration(token));
         }
 
         /**
@@ -222,7 +222,7 @@ public class UserController {
                 if (StrUtil.isBlank(username) || StrUtil.isBlank(password)) {
                         return Result.error(Constants.CODE_400, "参数错误");
                 }
-                return Result.success(userService.register(userDto));
+                return Result.success(iUserService.register(userDto));
         }
 
         /**
@@ -230,7 +230,7 @@ public class UserController {
          */
         @GetMapping("/roleMenu/{id}")
         public Result getRoleMenu(@PathVariable Integer id){
-               return Result.success(userService.selectMenuByUserId(id));
+               return Result.success(iUserService.selectMenuByUserId(id));
         }
 }
 
