@@ -42,6 +42,9 @@ public class ${table.controllerName} {
         @Resource
         private ${table.serviceName} i${table.entityPath}Service;
 
+        @Resource
+        private IRedisService iRedisService;
+
         // 新增或者更新
         @PostMapping("/save")
         public Result save(@RequestBody ${entity} ${table.entityPath}) {
@@ -66,7 +69,7 @@ public class ${table.controllerName} {
                 return Result.success(i${table.entityPath}Service.list());
         }
 
-        // 根据角色id、查询返回数据
+        // 根据id、查询返回数据
         @GetMapping("/{id}")
         public Result findOne(@PathVariable Integer id) {
                 return Result.success(i${table.entityPath}Service.getById(id));
