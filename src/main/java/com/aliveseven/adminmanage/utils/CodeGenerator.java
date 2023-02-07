@@ -2,7 +2,6 @@ package com.aliveseven.adminmanage.utils;
 
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;
 import com.baomidou.mybatisplus.generator.config.OutputFile;
-import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Collections;
@@ -50,7 +49,7 @@ public class CodeGenerator {
                     builder.mapperBuilder().enableMapperAnnotation().build();
                     builder.controllerBuilder().enableHyphenStyle()  // 开启驼峰转连字符
                             .enableRestStyle();  // 开启生成@RestController 控制器
-                    builder.addInclude("sys_todolist") // 设置需要生成的表名
+                    builder.addInclude("sys_project") // 设置需要生成的表名
                             .addTablePrefix("t_", "c_" , "sys_"); // 设置过滤表前缀
                 })
                  //.templateEngine(new FreemarkerTemplateEngine()) // 使用Freemarker引擎模板，默认的是Velocity引擎模板
