@@ -53,7 +53,7 @@ public class ${table.controllerName} {
 
         // 根据id，删除数据
         @PostMapping("/delete")
-        public Result save(@RequestParam Integer id) {
+        public Result deleteById(@RequestParam Integer id) {
                 return Result.success(i${table.entityPath}Service.removeById(id));
         }
 
