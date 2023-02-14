@@ -6,38 +6,43 @@ import cn.hutool.json.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author websocket服务
  */
-@ServerEndpoint(value = "/imserver/{username}")
+@ServerEndpoint(value = "/imserver/{username}/{userid}")
 @Component
 public class WebSocketServer {
     private static final Logger log = LoggerFactory.getLogger(WebSocketServer.class);
     /**
      * 记录当前在线连接数
      */
-    public static final Map<String, Session> sessionMap = new ConcurrentHashMap<>();
+    public static final Map<Map<String,String>,Session> sessionMap = new ConcurrentHashMap<>();
     /**
      * 连接建立成功调用的方法
      */
     @OnOpen
-    public void onOpen(Session session, @PathParam("username") String username) {
-        sessionMap.put(username, session);
-        log.info("有新用户加入，username={}, 当前在线人数为：{}", username, sessionMap.size());
+    public void onOpen(Session session, @PathParam("username") String username, @PathParam("userid") String userid) {
+        Map<String , String> user = new HashMap();
+        user.put("userId" , userid);
+        user.put("username" , username);
+        sessionMap.put(user, session);
+        log.info("有新用户加入，username={}, userid={}, 当前在线人数为：{}", username, userid , sessionMap.size());
         JSONObject result = new JSONObject();
         JSONArray array = new JSONArray();
         result.set("users", array);
         for (Object key : sessionMap.keySet()) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.set("username", key);
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.set("user", key);
             // {"username", "zhang", "username": "admin"}
-            array.add(jsonObject);
+            array.add(key);
         }
 //        {"users": [{"username": "zhang"},{ "username": "admin"}]}
         sendAllMessage(JSONUtil.toJsonStr(result));  // 后台发送消息给所有的客户端
@@ -46,9 +51,13 @@ public class WebSocketServer {
      * 连接关闭调用的方法
      */
     @OnClose
-    public void onClose(Session session, @PathParam("username") String username) {
-        sessionMap.remove(username);
-        log.info("有一连接关闭，移除username={}的用户session, 当前在线人数为：{}", username, sessionMap.size());
+    public void onClose(Session session, @PathParam("username") String username, @PathParam("userid") String userid) {
+        Map<String , String> user = new HashMap();
+        user.put("userId" , userid);
+        user.put("username" , username);
+//        sessionMap.keySet().removeIf(key -> key.equals(userid));
+        sessionMap.remove(user);
+        log.info("有一连接关闭，移除username={} , userid={},的用户session, 当前在线人数为：{}", username, userid , sessionMap.size());
     }
     /**
      * 收到客户端消息后调用的方法
@@ -58,7 +67,7 @@ public class WebSocketServer {
      * @param message 客户端发送过来的消息
      */
     @OnMessage
-    public void onMessage(String message, Session session, @PathParam("username") String username) {
+    public void onMessage(String message, Session session, @PathParam("username") String username, @PathParam("userid") String userid) {
         log.info("服务端收到用户username={}的消息:{}", username, message);
         JSONObject obj = JSONUtil.parseObj(message);
         String toUsername = obj.getStr("to"); // to表示发送给哪个用户，比如 admin
